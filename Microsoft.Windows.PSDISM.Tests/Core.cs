@@ -7,7 +7,7 @@ namespace Microsoft.Windows.PSDISM.Tests
     public class Core
     {
         // A valid .wim file to test
-        private const string IMAGE_TEST_FILEPATH = @"..\..\data\Winre.wim";
+        private const string IMAGE_TEST_FILEPATH = @"..\..\data\Winre-2.wim";
         // A valid .msu or .cab file to test adding a package to the .wim file
         // Ensure the package matches the build and arch of the .wim
         private const string IMAGE_TEST_PACKAGEPATH = @"..\..\data\abc.msu";
@@ -25,8 +25,10 @@ namespace Microsoft.Windows.PSDISM.Tests
                 Win32.DISM.DismInitialize(Win32.DISM.DismLogLevel.DismLogErrors, null, null))){
                 Assert.IsTrue(Win32.DISM.IsSuccessful(Win32.DISM.DismShutdown()));
             }
-
-            Assert.IsTrue(false);
+            else
+            {
+                Assert.Fail();
+            }
         }
 
         [TestMethod]

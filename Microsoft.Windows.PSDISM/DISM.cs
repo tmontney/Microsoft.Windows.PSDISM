@@ -238,15 +238,15 @@ namespace Microsoft.Windows.PSDISM.Win32
             public Void CustomizedInfo;
         }
 
-        public static void MarshalUnmananagedArray2Struct<T>(IntPtr unmanagedArray, int length, out T[] mangagedArray)
+        public static void MarshalUnmananagedArray2Struct<T>(IntPtr unmanagedArray, int length, out T[] managedArray)
         {
             var size = Marshal.SizeOf(typeof(T));
-            mangagedArray = new T[length];
+            managedArray = new T[length];
 
             for (int i = 0; i < length; i++)
             {
-                IntPtr ins = new IntPtr(unmanagedArray.ToInt64() + i * size);
-                mangagedArray[i] = Marshal.PtrToStructure<T>(ins);
+                IntPtr ins = IntPtr.Add(unmanagedArray, i * size);
+                managedArray[i] = Marshal.PtrToStructure<T>(ins);
             }
         }
 

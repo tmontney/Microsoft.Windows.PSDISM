@@ -364,3 +364,7 @@ FodyWeavers.xsd
 
 # Windows Image files
 *.wim
+
+# Windows update files
+*.cab
+*.msu
