@@ -11,7 +11,8 @@ namespace Microsoft.Windows.PSDISM.Win32
     {
         // (800702E4) -2147024156: requires elevation
         // (C0040001) -1073479679: not initialized
-        // (80070002) -2147024894: path not found
+        // (80070002) -2147024894: path not found/package not applicable
+        // (C1420117) -1052638953: files in use (unmount)
 
         // Init/Shutdown
         [DllImport("DismApi.dll", CharSet = CharSet.Auto, SetLastError = true)]
@@ -46,10 +47,20 @@ namespace Microsoft.Windows.PSDISM.Win32
         [DllImport("DismApi.dll", CharSet = CharSet.Auto, SetLastError = true)]
         public static extern Int32 DismGetMountedImageInfo(out IntPtr MountedImageInfo,
             out uint Count);
+        [DllImport("DismApi.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        public static extern Int32 DismGetPackageInfo(uint Session, [MarshalAs(UnmanagedType.LPWStr)] string Identifier,
+            DismPackageIdentifier PackageIdentifier, out IntPtr PackageInfo);
         // Add
         [DllImport("DismApi.dll", CharSet = CharSet.Auto, SetLastError = true)]
         public static extern Int32 DismAddPackage(uint Session, [MarshalAs(UnmanagedType.LPWStr)] string PackagePath,
             bool IgnoreCheck, bool PreventPending, IntPtr CancelEvent, IntPtr Progress, IntPtr UserData);
+
+        public enum DismPackageIdentifier
+        {
+            DismPackageNone = 0,
+            DismPackageName = 1,
+            DismPackagePath = 2
+        };
 
         public enum DismImageIdentifier
         {
@@ -122,6 +133,20 @@ namespace Microsoft.Windows.PSDISM.Win32
             DismMountStatusInvalid = 2
         };
 
+        public enum DismRestartType
+        {
+            DismRestartNo = 0,
+            DismRestartPossible = 1,
+            DismRestartRequired = 2
+        };
+
+        public enum DismFullyOfflineInstallable
+        {
+            DismFullyOfflineInstallable = 0,
+            DismFullyOfflineNotInstallable = 1,
+            DismFullyOfflineInstallableUndetermined = 2
+        };
+
         public delegate void DismProgressCallback(uint Current, uint Total, Void UserData);
 
         // https://learn.microsoft.com/en-us/windows-hardware/manufacture/desktop/dism/dism-api-constants?view=windows-11#constants
@@ -147,6 +172,45 @@ namespace Microsoft.Windows.PSDISM.Win32
             public const uint DISM_RESERVED_STORAGE_ENABLED = 0x00000001;
         }
 
+        public struct DismCustomProperty
+        {
+            [MarshalAs(UnmanagedType.LPWStr)] public string Name;
+            [MarshalAs(UnmanagedType.LPWStr)] public string Value;
+            [MarshalAs(UnmanagedType.LPWStr)] public string Path;
+        }
+
+        public struct DismFeature
+        {
+            [MarshalAs(UnmanagedType.LPWStr)] public string FeatureName;
+            public DismPackageFeatureState State;
+        }
+
+        public struct DismPackageInfo
+        {
+            [MarshalAs(UnmanagedType.LPWStr)] public string PackageName;
+            public DismPackageFeatureState PackageState;
+            public DismReleaseType ReleaseType;
+            public SYSTEMTIME InstallTime;
+            public bool Applicable;
+            [MarshalAs(UnmanagedType.LPWStr)] public string Copyright;
+            [MarshalAs(UnmanagedType.LPWStr)] public string Company;
+            public SYSTEMTIME CreationTime;
+            [MarshalAs(UnmanagedType.LPWStr)] public string DisplayName;
+            [MarshalAs(UnmanagedType.LPWStr)] public string Description;
+            [MarshalAs(UnmanagedType.LPWStr)] public string InstallClient;
+            [MarshalAs(UnmanagedType.LPWStr)] public string InstallPackageName;
+            public SYSTEMTIME LastUpdateTime;
+            [MarshalAs(UnmanagedType.LPWStr)] public string ProductName;
+            [MarshalAs(UnmanagedType.LPWStr)] public string ProductVersion;
+            public DismRestartType RestartRequired;
+            public DismFullyOfflineInstallable FullyOffline;
+            [MarshalAs(UnmanagedType.LPWStr)] public string SupportInformation;
+            public DismCustomProperty CustomProperty;
+            public uint CustomPropertyCount;
+            public DismFeature Feature;
+            public uint FeatureCount;
+        }
+
         public struct DismMountedImageInfo
         {
             [MarshalAs(UnmanagedType.LPWStr)] public string MountPath;
@@ -170,7 +234,7 @@ namespace Microsoft.Windows.PSDISM.Win32
         }
 
         [StructLayout(LayoutKind.Sequential)]
-        private struct SYSTEMTIME
+        public struct SYSTEMTIME
         {
             [MarshalAs(UnmanagedType.U2)] public short Year;
             [MarshalAs(UnmanagedType.U2)] public short Month;
